@@ -1,0 +1,257 @@
+// Slack block message template for creator signup automation
+
+export const creatorSignupBlockTemplate = [
+  {
+    "type": "header",
+    "text": {
+      "type": "plain_text",
+      "text": "🎉 New Creator Signed Up!",
+      "emoji": true
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*{{creatorName}}* has just completed their creator profile{{#if signupSource}} _({{signupSource}})_{{/if}}"
+    },
+    "accessory": {
+      "type": "image",
+      "image_url": "https://api.dicebear.com/7.x/avataaars/png?seed={{creatorEmail}}&size=128",
+      "alt_text": "{{creatorName}}"
+    }
+  },
+  {
+    "type": "divider"
+  },
+  {
+    "type": "section",
+    "fields": [
+      {
+        "type": "mrkdwn",
+        "text": "*📧 Email:*\n{{creatorEmail}}"
+      },
+      {
+        "type": "mrkdwn", 
+        "text": "*📱 Phone:*\n{{creatorPhone}}"
+      },
+      {
+        "type": "mrkdwn",
+        "text": "*🌍 Language:*\n{{primaryLanguage}}"
+      },
+      {
+        "type": "mrkdwn",
+        "text": "*🎯 Source:*\n{{#equals signupSource 'import_invitation'}}📨 Invitation{{else}}🌱 Organic{{/equals}}"
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "fields": [
+      {
+        "type": "mrkdwn",
+        "text": "*📸 Profile Picture:*\n{{#if hasProfilePicture}}✅ Uploaded{{else}}❌ Not uploaded{{/if}}"
+      },
+      {
+        "type": "mrkdwn",
+        "text": "*🎥 Introduction Video:*\n{{#if hasIntroductionVideo}}✅ Uploaded{{else}}❌ Not uploaded{{/if}}"
+      }
+    ]
+  },
+  {
+    "type": "actions",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "View Creator Profile",
+          "emoji": true
+        },
+        "style": "primary",
+        "url": "{{appUrl}}/dashboard/creators/{{creatorId}}/view"
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "All Creators",
+          "emoji": true
+        },
+        "url": "{{appUrl}}/dashboard/creators"
+      }
+    ]
+  },
+  {
+    "type": "context",
+    "elements": [
+      {
+        "type": "mrkdwn",
+        "text": "🕐 Signed up {{signupDate}}"
+      }
+    ]
+  }
+];
+
+// Alternative minimalist version
+export const creatorSignupSimpleBlockTemplate = [
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "🎉 *New Creator:* {{creatorName}} ({{creatorEmail}}) has signed up{{#equals signupSource 'import_invitation'}} via invitation{{/equals}}!"
+    }
+  },
+  {
+    "type": "context",
+    "elements": [
+      {
+        "type": "mrkdwn",
+        "text": "Language: *{{primaryLanguage}}* | Profile: {{#if hasProfilePicture}}✅{{else}}❌{{/if}} | Video: {{#if hasIntroductionVideo}}✅{{else}}❌{{/if}} | <{{appUrl}}/dashboard/creators/{{creatorId}}/view|View Profile>"
+      }
+    ]
+  }
+];
+
+// Detailed version with all information
+export const creatorSignupDetailedBlockTemplate = [
+  {
+    "type": "header",
+    "text": {
+      "type": "plain_text",
+      "text": "🎉 New Creator Registration",
+      "emoji": true
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "A new creator has completed their profile registration on Social Bubble!"
+    }
+  },
+  {
+    "type": "divider"
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*Creator Details*"
+    }
+  },
+  {
+    "type": "section",
+    "fields": [
+      {
+        "type": "mrkdwn",
+        "text": "*👤 Name:*\n{{creatorName}}"
+      },
+      {
+        "type": "mrkdwn",
+        "text": "*🆔 Creator ID:*\n`{{creatorId}}`"
+      },
+      {
+        "type": "mrkdwn",
+        "text": "*📧 Email:*\n<mailto:{{creatorEmail}}|{{creatorEmail}}>"
+      },
+      {
+        "type": "mrkdwn",
+        "text": "*📱 Phone:*\n{{creatorPhone}}"
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*Profile Information*"
+    }
+  },
+  {
+    "type": "section",
+    "fields": [
+      {
+        "type": "mrkdwn",
+        "text": "*🌍 Primary Language:*\n{{#equals primaryLanguage 'en'}}English{{/equals}}{{#equals primaryLanguage 'nl'}}Dutch{{/equals}}{{#equals primaryLanguage 'de'}}German{{/equals}}{{#equals primaryLanguage 'fr'}}French{{/equals}}{{#equals primaryLanguage 'es'}}Spanish{{/equals}}{{#not_equals primaryLanguage 'en'}}{{#not_equals primaryLanguage 'nl'}}{{#not_equals primaryLanguage 'de'}}{{#not_equals primaryLanguage 'fr'}}{{#not_equals primaryLanguage 'es'}}{{primaryLanguage}}{{/not_equals}}{{/not_equals}}{{/not_equals}}{{/not_equals}}{{/not_equals}}"
+      },
+      {
+        "type": "mrkdwn",
+        "text": "*🎯 Signup Source:*\n{{#equals signupSource 'import_invitation'}}📨 Import Invitation{{else}}🌱 Organic Signup{{/equals}}"
+      },
+      {
+        "type": "mrkdwn",
+        "text": "*📸 Profile Picture:*\n{{#if hasProfilePicture}}✅ Uploaded{{else}}❌ Not uploaded{{/if}}"
+      },
+      {
+        "type": "mrkdwn",
+        "text": "*🎥 Introduction Video:*\n{{#if hasIntroductionVideo}}✅ Uploaded{{else}}❌ Not uploaded{{/if}}"
+      }
+    ]
+  },
+  {{#equals signupSource 'import_invitation'}}
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "ℹ️ _This creator signed up from our invitation campaign_"
+    }
+  },
+  {{/equals}}
+  {{#unless hasProfilePicture}}
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "⚠️ _Creator has not uploaded a profile picture yet_"
+    }
+  },
+  {{/unless}}
+  {
+    "type": "divider"
+  },
+  {
+    "type": "actions",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "👤 View Full Profile",
+          "emoji": true
+        },
+        "style": "primary",
+        "url": "{{appUrl}}/dashboard/creators/{{creatorId}}/view"
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "📋 View All Creators",
+          "emoji": true
+        },
+        "url": "{{appUrl}}/dashboard/creators"
+      },
+      {{#equals signupSource 'import_invitation'}}
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "📊 Import Dashboard",
+          "emoji": true
+        },
+        "url": "{{appUrl}}/dashboard/creator-imports"
+      }
+      {{/equals}}
+    ]
+  },
+  {
+    "type": "context",
+    "elements": [
+      {
+        "type": "mrkdwn",
+        "text": "🕐 Registered on {{signupDate}} | Creator ID: `{{creatorId}}`"
+      }
+    ]
+  }
+];

@@ -1,0 +1,3 @@
+-- Placeholder migration - changes already applied
+-- This migration was previously applied and then reverted
+-- Keeping empty file to maintain migration history consistency
