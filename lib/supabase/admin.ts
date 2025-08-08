@@ -1,21 +1,46 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
-}
+let supabaseAdminClient: SupabaseClient | null = null;
 
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('Missing env.SUPABASE_SERVICE_ROLE_KEY');
-}
-
-// Admin client bypasses RLS
-export const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+// Admin client bypasses RLS - lazy initialization
+export function getSupabaseAdmin(): SupabaseClient {
+  if (!supabaseAdminClient) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    // During build, return a dummy client if env vars are not set
+    if (!supabaseUrl || !supabaseServiceKey || supabaseUrl === 'your_supabase_url') {
+      if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
+        // During build time, create a dummy client that won't be used
+        return createClient('https://placeholder.supabase.co', 'placeholder-key', {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        });
+      }
+      throw new Error('Missing Supabase environment variables');
     }
+    
+    supabaseAdminClient = createClient(
+      supabaseUrl,
+      supabaseServiceKey,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
   }
-);
+  
+  return supabaseAdminClient;
+}
+
+// For backward compatibility
+export const supabaseAdmin = new Proxy({} as SupabaseClient, {
+  get(target, prop, receiver) {
+    const client = getSupabaseAdmin();
+    return Reflect.get(client, prop, receiver);
+  }
+});
