@@ -5,10 +5,26 @@ echo "🚀 Starting deployment..."
 # Exit on error
 set -e
 
+# Save existing .env.production if it exists
+if [ -f .env.production ]; then
+  echo "💾 Backing up existing .env.production..."
+  cp .env.production .env.production.backup
+fi
+
 # Pull latest changes
 echo "📥 Pulling latest changes..."
 git fetch origin main
 git reset --hard origin/main
+
+# Restore .env.production from backup
+if [ -f .env.production.backup ]; then
+  echo "♻️  Restoring .env.production from backup..."
+  mv .env.production.backup .env.production
+elif [ ! -f .env.production ] && [ -f .env.production.example ]; then
+  echo "📝 Creating .env.production from example (please update with real values)..."
+  cp .env.production.example .env.production
+  echo "⚠️  WARNING: Using placeholder values. Please update .env.production with real values!"
+fi
 
 # Clean previous builds and caches to free memory
 echo "🧹 Deep cleaning to free memory..."
