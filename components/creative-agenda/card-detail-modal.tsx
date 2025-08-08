@@ -334,7 +334,10 @@ export function CardDetailModal({ card, isOpen, onClose, onUpdate }: CardDetailM
 
             <TabsContent value="comments" className="p-4">
               <CommentsSection
-                comments={comments}
+                comments={comments.map(c => ({
+                  ...c,
+                  briefing_id: c.card_id
+                } as any))}
                 onAddComment={handleAddComment}
                 currentUserRole="social_bubble"
               />

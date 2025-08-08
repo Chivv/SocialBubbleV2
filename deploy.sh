@@ -1,47 +1,58 @@
 #!/bin/bash
 
-# Ploi Deploy Script for Next.js Application
-# This script should be added to your Ploi server's deploy script section
-
 echo "🚀 Starting deployment..."
 
-# Navigate to the project directory
-cd /home/ploi/platform.bubbleads.nl || exit
+# Exit on error
+set -e
 
-# Pull the latest changes
+# Pull latest changes
 echo "📥 Pulling latest changes..."
-git pull origin main
+git fetch origin main
+git reset --hard origin/main
 
-# Install dependencies
-echo "📦 Installing dependencies..."
-npm ci --production=false
+# Clean previous builds and caches to free memory
+echo "🧹 Deep cleaning to free memory..."
+rm -rf .next
+rm -rf node_modules
+rm -rf ~/.npm/_cacache
+npm cache clean --force
 
-# Run database migrations
-echo "🗄️ Running database migrations..."
-npx supabase migration up
+# Create swap file if needed (requires sudo)
+echo "💾 Checking swap space..."
+free -h
 
-# Build the Next.js application
-echo "🏗️ Building application..."
+# Install dependencies in smaller chunks with aggressive memory limits
+echo "📦 Installing dependencies with memory optimization..."
+export NODE_OPTIONS="--max-old-space-size=512"
+
+# First install only production dependencies
+npm install --production --no-audit --no-fund --prefer-offline
+
+# Then install dev dependencies needed for build
+npm install --no-audit --no-fund --prefer-offline --production=false
+
+# Build the application with strict memory limits
+echo "🔨 Building application..."
+export NODE_OPTIONS="--max-old-space-size=768"
 npm run build
 
-# Install PM2 globally if not already installed
-if ! command -v pm2 &> /dev/null; then
-    echo "📦 Installing PM2..."
-    npm install -g pm2
-fi
+# Clear memory after build
+unset NODE_OPTIONS
 
-# Stop the existing PM2 process (if running)
-echo "🛑 Stopping existing application..."
+# Stop existing PM2 process
+echo "🛑 Stopping existing process..."
 pm2 stop socialbubble || true
+pm2 delete socialbubble || true
 
-# Start the application with PM2
-echo "🟢 Starting application..."
+# Start the application
+echo "🚀 Starting application..."
 pm2 start ecosystem.config.js --env production
 
 # Save PM2 configuration
+echo "💾 Saving PM2 configuration..."
 pm2 save
+pm2 startup || true
 
-# Ensure PM2 starts on system reboot
-pm2 startup systemd -u ploi --hp /home/ploi || true
-
-echo "✅ Deployment completed successfully!"
+echo "✅ Deployment complete!"
+echo "📊 Application status:"
+pm2 status

@@ -90,7 +90,7 @@ export default function CreatorBriefingDetailClient({
             );
           }
           if (node.type === 'heading') {
-            const Tag = `h${node.attrs.level}` as keyof JSX.IntrinsicElements;
+            const Tag = `h${node.attrs.level}` as any;
             return (
               <Tag key={index}>
                 {node.content?.map((inline: any, i: number) => {

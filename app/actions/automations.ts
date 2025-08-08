@@ -443,13 +443,13 @@ export async function testAutomation(
     const { data: linkedBriefings } = await supabase
       .from('casting_briefing_links')
       .select('briefing_id')
-      .eq('casting_id', castingId);
+      .eq('casting_id', testDataId);
 
     // Count chosen creators (client selections)
     const { data: selections } = await supabase
       .from('casting_selections')
       .select('id')
-      .eq('casting_id', castingId)
+      .eq('casting_id', testDataId)
       .eq('selected_by_role', 'client');
 
     const chosenCreatorsCount = selections?.length || 0;
@@ -481,7 +481,7 @@ export async function testAutomation(
           *,
           creator:creators(id, first_name, last_name, email)
         `)
-        .eq('casting_id', castingId);
+        .eq('casting_id', testDataId);
 
       const totalInvited = invitations?.length || 0;
       const totalAccepted = invitations?.filter(inv => inv.status === 'accepted').length || 0;
@@ -512,12 +512,12 @@ export async function testAutomation(
       const { data: invitations } = await supabase
         .from('casting_invitations')
         .select('id, status')
-        .eq('casting_id', castingId);
+        .eq('casting_id', testDataId);
 
       const { data: selections } = await supabase
         .from('casting_selections')
         .select('id, selected_by_role')
-        .eq('casting_id', castingId);
+        .eq('casting_id', testDataId);
 
       const totalInvited = invitations?.length || 0;
       const totalAccepted = invitations?.filter(inv => inv.status === 'accepted').length || 0;

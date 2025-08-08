@@ -55,7 +55,7 @@ export default function CreatorBriefingDetail({ briefingLink }: CreatorBriefingD
   const [hasInvoice, setHasInvoice] = useState(false);
   const [checkingInvoice, setCheckingInvoice] = useState(true);
   const status = briefingLink.submission?.submission_status || 'pending';
-  const StatusIcon = statusConfig[status].icon;
+  const StatusIcon = statusConfig[status as keyof typeof statusConfig]?.icon || statusConfig.pending.icon;
 
   useEffect(() => {
     async function checkInvoice() {
@@ -117,9 +117,9 @@ export default function CreatorBriefingDetail({ briefingLink }: CreatorBriefingD
             </span>
           </div>
         </div>
-        <Badge className={`${statusConfig[status].color} text-white`}>
+        <Badge className={`${statusConfig[status as keyof typeof statusConfig]?.color || statusConfig.pending.color} text-white`}>
           <StatusIcon className="h-3 w-3 mr-1" />
-          {statusConfig[status].label}
+          {statusConfig[status as keyof typeof statusConfig]?.label || statusConfig.pending.label}
         </Badge>
       </div>
 
@@ -206,7 +206,7 @@ export default function CreatorBriefingDetail({ briefingLink }: CreatorBriefingD
               <Clock className="h-4 w-4" />
               <AlertTitle>Submission Under Review</AlertTitle>
               <AlertDescription>
-                Your submission is being reviewed by the Social Bubble team. You'll be notified once it's approved or if any changes are needed.
+                Your submission is being reviewed by the Social Bubble team. You&apos;ll be notified once it&apos;s approved or if any changes are needed.
               </AlertDescription>
             </Alert>
           )}

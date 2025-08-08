@@ -99,7 +99,7 @@ export default function ClientCastingsClient({ castings }: ClientCastingsClientP
               <Camera className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-xl font-medium mb-2">No castings yet</p>
               <p className="text-muted-foreground">
-                When Social Bubble creates castings for you, they'll appear here.
+                When Social Bubble creates castings for you, they&apos;ll appear here.
               </p>
             </div>
           ) : (

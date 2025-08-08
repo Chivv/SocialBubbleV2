@@ -15,7 +15,7 @@ export default async function CastingDetailPage({ params }: { params: Promise<{ 
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Casting Not Found</h1>
-        <p>The casting you're looking for doesn't exist or you don't have permission to view it.</p>
+        <p>The casting you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to view it.</p>
       </div>
     );
   }

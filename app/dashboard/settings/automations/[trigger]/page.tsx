@@ -4,12 +4,13 @@ import { TriggerDetailClient } from './trigger-detail-client';
 import { getTriggerDefinition } from '@/lib/automations/triggers';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     trigger: string;
-  };
+  }>;
 }
 
 export default async function TriggerDetailPage({ params }: PageProps) {
+  const resolvedParams = await params;
   const user = await currentUser();
   
   if (!user) {
@@ -23,11 +24,11 @@ export default async function TriggerDetailPage({ params }: PageProps) {
     redirect('/dashboard');
   }
 
-  const trigger = getTriggerDefinition(params.trigger);
+  const trigger = getTriggerDefinition(resolvedParams.trigger);
   
   if (!trigger) {
     redirect('/dashboard/settings/automations');
   }
 
-  return <TriggerDetailClient triggerName={params.trigger} />;
+  return <TriggerDetailClient triggerName={resolvedParams.trigger} />;
 }

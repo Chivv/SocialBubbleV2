@@ -947,7 +947,10 @@ export async function selectFinalCreators(castingId: string, creatorIds: string[
 
     // Check if any linked briefing is approved
     const hasApprovedBriefing = linkedBriefings?.some(
-      link => link.briefing?.status === 'approved'
+      link => {
+        const briefing = link.briefing as any;
+        return briefing && !Array.isArray(briefing) && briefing.status === 'approved';
+      }
     ) || false;
     
     const newStatus = hasApprovedBriefing ? 'shooting' : 'approved_by_client';
@@ -1082,12 +1085,13 @@ export async function selectFinalCreators(castingId: string, creatorIds: string[
     // 2. Not chosen creators
     if (notChosenCreators && notChosenCreators.length > 0) {
       for (const invite of notChosenCreators) {
-        if (invite.creator) {
+        const creator = invite.creator as any;
+        if (creator && !Array.isArray(creator)) {
           emailTasks.push({
-            recipient: invite.creator.email,
+            recipient: creator.email,
             sendFn: () => sendCastingNotSelectedEmail({
-              to: invite.creator.email,
-              creatorName: invite.creator.first_name || 'Creator',
+              to: creator.email,
+              creatorName: creator.first_name || 'Creator',
               castingTitle: casting.title,
               clientName: casting.client?.company_name || 'Client',
             })
@@ -1099,12 +1103,13 @@ export async function selectFinalCreators(castingId: string, creatorIds: string[
     // 3. No response creators
     if (noResponseCreators && noResponseCreators.length > 0) {
       for (const invite of noResponseCreators) {
-        if (invite.creator) {
+        const creator = invite.creator as any;
+        if (creator && !Array.isArray(creator)) {
           emailTasks.push({
-            recipient: invite.creator.email,
+            recipient: creator.email,
             sendFn: () => sendCastingClosedNoResponseEmail({
-              to: invite.creator.email,
-              creatorName: invite.creator.first_name || 'Creator',
+              to: creator.email,
+              creatorName: creator.first_name || 'Creator',
               castingTitle: casting.title,
               clientName: casting.client?.company_name || 'Client',
             })

@@ -29,8 +29,8 @@ export default function GoogleDriveSetupPage() {
       if (result.success) {
         setAuthStatus({
           isAuthorized: result.isAuthorized || false,
-          email: result.email,
-          name: result.name,
+          email: result.email || undefined,
+          name: result.name || undefined,
           message: result.message
         });
       }

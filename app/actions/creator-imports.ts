@@ -112,8 +112,8 @@ export async function importCreatorsFromCSV(creators: { email: string; full_name
     const supabase = createServiceClient();
     
     // Normalize and validate emails, filter out duplicates
-    const processedCreators = [];
-    const invalidEmails = [];
+    const processedCreators: any[] = [];
+    const invalidEmails: any[] = [];
     
     for (const creator of creators) {
       if (!creator.full_name || !creator.full_name.trim()) {

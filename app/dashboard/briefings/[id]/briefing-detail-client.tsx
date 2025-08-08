@@ -125,7 +125,7 @@ export default function BriefingDetailClient({ briefing, comments, currentUserId
           <CommentsSection
             comments={comments}
             onAddComment={handleAddComment}
-            currentUserRole={role || 'social_bubble'}
+            currentUserRole={(role === 'creator' ? 'social_bubble' : role) || 'social_bubble'}
           />
         </TabsContent>
       </Tabs>

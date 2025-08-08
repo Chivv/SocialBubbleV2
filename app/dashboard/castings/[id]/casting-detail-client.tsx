@@ -1221,7 +1221,7 @@ export default function CastingDetailClient({
                                   <Check className="h-4 w-4 text-green-600" />
                                   <AlertTitle className="text-green-800">Approved</AlertTitle>
                                   <AlertDescription className="text-green-700">
-                                    Creator's submission has been approved.
+                                    Creator&apos;s submission has been approved.
                                   </AlertDescription>
                                 </Alert>
                               )}

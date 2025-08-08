@@ -402,7 +402,7 @@ export function CardDetailClient({ card: initialCard }: CardDetailClientProps) {
                   <Label htmlFor="status">Status</Label>
                   <Select 
                     value={status} 
-                    onValueChange={setStatus}
+                    onValueChange={(value) => setStatus(value as typeof status)}
                     disabled={!isEditable}
                   >
                     <SelectTrigger id="status" className="mt-1">
@@ -553,7 +553,10 @@ export function CardDetailClient({ card: initialCard }: CardDetailClientProps) {
             </CardHeader>
             <CardContent>
               <CommentsSection
-                comments={comments}
+                comments={comments.map(c => ({
+                  ...c,
+                  briefing_id: c.card_id
+                } as any))}
                 onAddComment={handleAddComment}
                 currentUserRole="social_bubble"
               />

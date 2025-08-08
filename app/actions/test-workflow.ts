@@ -203,7 +203,10 @@ export async function runWorkflowTest() {
         .eq('casting_id', castingId);
       
       const hasApprovedBriefing = briefingLinks?.some(
-        link => link.briefing?.status === 'approved'
+        link => {
+          const briefing = link.briefing as any;
+          return briefing && !Array.isArray(briefing) && briefing.status === 'approved';
+        }
       ) || false;
       
       const newStatus = hasApprovedBriefing ? 'shooting' : 'approved_by_client';

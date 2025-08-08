@@ -457,7 +457,7 @@ export default function ClientsListPage() {
                                 />
                               </FormControl>
                               <p className="text-sm text-muted-foreground">
-                                Paste the URL of the client's main Google Drive folder. A RAW folder will be created inside for creator uploads.
+                                Paste the URL of the client&apos;s main Google Drive folder. A RAW folder will be created inside for creator uploads.
                               </p>
                               <FormMessage />
                             </FormItem>

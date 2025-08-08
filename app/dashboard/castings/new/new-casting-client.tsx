@@ -120,7 +120,7 @@ export default function NewCastingClient({ clients }: NewCastingClientProps) {
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
-                The selected client's creator count will determine the maximum number of creators for this casting.
+                The selected client&apos;s creator count will determine the maximum number of creators for this casting.
               </p>
             </div>
 

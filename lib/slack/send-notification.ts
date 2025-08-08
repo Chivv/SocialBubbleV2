@@ -40,7 +40,7 @@ export async function sendSlackNotification({
     
     switch (type) {
       case 'casting-missing-briefing':
-        const messageData = buildCastingMissingBriefingMessage(data, mentionUsers);
+        const messageData = buildCastingMissingBriefingMessage(data as any, mentionUsers);
         payload = {
           channel: targetChannel,
           username: 'Bubble Ads Platform',

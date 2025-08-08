@@ -18,7 +18,7 @@ export default async function CreatorBriefingDetailPage({ params }: { params: Pr
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Briefing Not Found</h1>
-        <p>The briefing you're looking for doesn't exist or you don't have permission to view it.</p>
+        <p>The briefing you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to view it.</p>
       </div>
     );
   }

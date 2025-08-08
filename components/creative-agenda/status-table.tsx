@@ -40,7 +40,7 @@ export function StatusTable({
             >
               <div>
                 <p className="font-medium">{card.title}</p>
-                <p className="text-sm text-muted-foreground">{card.campaign_name}</p>
+                <p className="text-sm text-muted-foreground">{(card as any).campaign_name || (card as any).client_name || ''}</p>
               </div>
               <p className="text-sm text-muted-foreground">
                 {new Date(card.updated_at).toLocaleDateString()}

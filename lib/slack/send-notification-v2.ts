@@ -39,7 +39,7 @@ export async function sendSlackNotification({
     
     switch (type) {
       case 'casting-missing-briefing':
-        const messageData = buildCastingMissingBriefingMessage(data, mentionUsers);
+        const messageData = buildCastingMissingBriefingMessage(data as any, mentionUsers);
         text = messageData.text;
         blocks = messageData.blocks;
         break;

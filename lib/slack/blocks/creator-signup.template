@@ -188,8 +188,8 @@ export const creatorSignupDetailedBlockTemplate = [
         "text": "*🎥 Introduction Video:*\n{{#if hasIntroductionVideo}}✅ Uploaded{{else}}❌ Not uploaded{{/if}}"
       }
     ]
-  },
-  {{#equals signupSource 'import_invitation'}}
+  }
+  {{#equals signupSource 'import_invitation'}},
   {
     "type": "section",
     "text": {

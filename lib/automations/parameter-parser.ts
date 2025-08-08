@@ -46,10 +46,10 @@ export function substituteParametersInJson(
     
     for (const [key, value] of Object.entries(template)) {
       // Special handling for the main text field in Slack blocks
-      if (isTest && key === 'text' && typeof value === 'object' && value.text && !template.type) {
+      if (isTest && key === 'text' && typeof value === 'object' && value !== null && (value as any).text && !template.type) {
         result[key] = {
           ...value,
-          text: `[TEST] ${substituteParametersInJson(value.text, parameters, false)}`
+          text: `[TEST] ${substituteParametersInJson((value as any).text, parameters, false)}`
         };
       } else {
         result[key] = substituteParametersInJson(value, parameters, false);

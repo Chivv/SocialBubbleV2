@@ -113,7 +113,7 @@ export async function runRealisticWorkflowTest() {
         results.push(`✅ Created briefing: ${briefing.title}`);
         
         // Link briefing to casting using server action
-        const linkResult = await linkBriefingToCasting(castingId, briefing.id);
+        const linkResult = await linkBriefingToCasting(castingId!, briefing.id);
         
         if (linkResult.success) {
           results.push(`✅ Linked briefing to casting`);
@@ -126,7 +126,7 @@ export async function runRealisticWorkflowTest() {
       // Step 5: Send invitations using server action
       results.push('\n📧 Sending invitations...');
       const inviteResult = await sendCastingInvitations(
-        castingId, 
+        castingId!, 
         creators.map(c => c.id)
       );
       
@@ -184,7 +184,7 @@ export async function runRealisticWorkflowTest() {
       // Step 7: Social Bubble selects creators using server action
       results.push('\n🎯 Social Bubble selecting creators...');
       const selectResult = await selectCreatorsForClient(
-        castingId,
+        castingId!,
         acceptingInvitations.map(inv => inv.creator_id)
       );
       
@@ -196,7 +196,7 @@ export async function runRealisticWorkflowTest() {
 
       // Step 8: Update status to send_client_feedback
       results.push('\n📨 Sending to client for feedback...');
-      const updateResult = await updateCasting(castingId, {
+      const updateResult = await updateCasting(castingId!, {
         status: 'send_client_feedback',
       });
       
@@ -213,7 +213,7 @@ export async function runRealisticWorkflowTest() {
       // Step 9: Client approves creators using server action (now works for Social Bubble users too)
       results.push('\n👍 Client approving creators...');
       const approveResult = await selectFinalCreators(
-        castingId,
+        castingId!,
         acceptingInvitations.map(inv => inv.creator_id)
       );
       
@@ -264,7 +264,7 @@ export async function runRealisticWorkflowTest() {
           .eq('id', submittingCreator.id);
         
         // Submit using server action (now works for Social Bubble users)
-        const submitResult = await submitCreatorWork(castingId, submittingCreator.creator_id);
+        const submitResult = await submitCreatorWork(castingId!, submittingCreator.creator_id);
         
         if (submitResult.success) {
           results.push(`✅ ${submittingCreator.creator.first_name} submitted their work`);
@@ -297,7 +297,7 @@ export async function runRealisticWorkflowTest() {
     } catch (error) {
       // Cleanup on error
       if (castingId) {
-        await cleanupTestData(castingId, briefingId);
+        await cleanupTestData(castingId!, briefingId);
       }
       throw error;
     }
@@ -360,7 +360,7 @@ export async function cleanupTestCasting(castingId: string, briefingId?: string)
       throw new Error('Only Social Bubble team members can cleanup test data');
     }
 
-    await cleanupTestData(castingId, briefingId);
+    await cleanupTestData(castingId!, briefingId);
 
     return { success: true, message: 'Test casting cleaned up successfully' };
   } catch (error) {

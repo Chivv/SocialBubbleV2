@@ -364,7 +364,10 @@ export async function getCreatorBriefings() {
 
     // Filter to only show briefings from approved castings
     const approvedBriefings = briefingLinks?.filter(
-      link => link.casting && ['approved_by_client', 'shooting', 'done'].includes(link.casting.status)
+      link => {
+        const casting = link.casting as any;
+        return casting && !Array.isArray(casting) && ['approved_by_client', 'shooting', 'done'].includes(casting.status);
+      }
     ) || [];
 
     // Get creator submissions for these castings
@@ -678,8 +681,9 @@ async function handleBriefingLinked(castingId: string, briefingId: string, userI
           const rawFolderId = await ensureRAWFolder(casting.client.drive_folder_id);
           
           for (const selection of selections) {
-            if (selection.creator) {
-              const creatorFullName = `${selection.creator.first_name} ${selection.creator.last_name || ''}`.trim();
+            const creator = selection.creator as any;
+            if (creator && !Array.isArray(creator)) {
+              const creatorFullName = `${creator.first_name} ${creator.last_name || ''}`.trim();
               
               try {
                 const { folderId, folderUrl } = await createCreatorFolder(
@@ -714,16 +718,19 @@ async function handleBriefingLinked(castingId: string, briefingId: string, userI
       // Queue "briefing now ready" emails for background sending
       const emailTasks = selections
         ?.filter(sel => sel.creator)
-        .map(sel => ({
-          recipient: sel.creator!.email,
-          sendFn: () => sendBriefingNowReadyEmail({
-            to: sel.creator!.email,
-            creatorName: sel.creator!.first_name || 'Creator',
+        .map(sel => {
+          const creator = sel.creator as any;
+          return {
+            recipient: creator.email,
+            sendFn: () => sendBriefingNowReadyEmail({
+              to: creator.email,
+              creatorName: creator.first_name || 'Creator',
             castingTitle: casting.title,
             clientName: casting.client?.company_name || 'Client',
             compensation: casting.compensation,
           })
-        })) || [];
+        }
+      }) || [];
 
       if (emailTasks.length > 0) {
         queueEmails(emailTasks);
@@ -763,15 +770,16 @@ export async function handleBriefingApproved(briefingId: string) {
 
     // Process each linked casting
     for (const link of links) {
-      if (!link.casting) continue;
+      const casting = link.casting as any;
+      if (!casting || Array.isArray(casting)) continue;
       
       // Check if casting is at approved_by_client status
-      if (link.casting.status === 'approved_by_client') {
+      if (casting.status === 'approved_by_client') {
         // Update casting status to shooting
         await supabase
           .from('castings')
           .update({ status: 'shooting' })
-          .eq('id', link.casting.id);
+          .eq('id', casting.id);
 
         // Get all chosen creators (selected by client)
         const { data: selections } = await supabase
@@ -780,23 +788,24 @@ export async function handleBriefingApproved(briefingId: string) {
             creator:creators(id, email, first_name, last_name),
             creator_id
           `)
-          .eq('casting_id', link.casting.id)
+          .eq('casting_id', casting.id)
           .eq('selected_by_role', 'client');
 
         // Create Google Drive folders if client has Drive folder configured
-        if (link.casting.client?.drive_folder_id && selections && selections.length > 0) {
+        if (casting.client?.drive_folder_id && selections && selections.length > 0) {
           try {
-            const rawFolderId = await ensureRAWFolder(link.casting.client.drive_folder_id);
+            const rawFolderId = await ensureRAWFolder(casting.client.drive_folder_id);
             
             for (const selection of selections) {
-              if (selection.creator) {
-                const creatorFullName = `${selection.creator.first_name} ${selection.creator.last_name || ''}`.trim();
+              const creator = selection.creator as any;
+              if (creator && !Array.isArray(creator)) {
+                const creatorFullName = `${creator.first_name} ${creator.last_name || ''}`.trim();
                 
                 try {
                   const { folderId, folderUrl } = await createCreatorFolder(
                     rawFolderId,
                     creatorFullName,
-                    link.casting.title
+                    casting.title
                   );
                   
                   // Update creator submission with Drive folder info
@@ -807,7 +816,7 @@ export async function handleBriefingApproved(briefingId: string) {
                       drive_folder_url: folderUrl,
                       drive_folder_created_at: new Date().toISOString()
                     })
-                    .eq('casting_id', link.casting.id)
+                    .eq('casting_id', casting.id)
                     .eq('creator_id', selection.creator_id);
                     
                   console.log(`Created Drive folder for ${creatorFullName}: ${folderUrl}`);
@@ -825,20 +834,23 @@ export async function handleBriefingApproved(briefingId: string) {
         // Queue "briefing now ready" emails for background sending
         const emailTasks = selections
           ?.filter(sel => sel.creator)
-          .map(sel => ({
-            recipient: sel.creator!.email,
-            sendFn: () => sendBriefingNowReadyEmail({
-              to: sel.creator!.email,
-              creatorName: sel.creator!.first_name || 'Creator',
-              castingTitle: link.casting!.title,
-              clientName: link.casting!.client?.company_name || 'Client',
-              compensation: link.casting!.compensation,
-            })
-          })) || [];
+          .map(sel => {
+            const creator = sel.creator as any;
+            return {
+              recipient: creator.email,
+              sendFn: () => sendBriefingNowReadyEmail({
+                to: creator.email,
+                creatorName: creator.first_name || 'Creator',
+                castingTitle: casting.title,
+                clientName: casting.client?.company_name || 'Client',
+                compensation: casting.compensation,
+              })
+            };
+          }) || [];
 
         if (emailTasks.length > 0) {
           queueEmails(emailTasks);
-          console.log(`Queued ${emailTasks.length} briefing ready emails for casting ${link.casting.id}`);
+          console.log(`Queued ${emailTasks.length} briefing ready emails for casting ${casting.id}`);
         }
       }
     }

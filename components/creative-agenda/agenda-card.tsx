@@ -19,7 +19,7 @@ interface AgendaCardProps {
 }
 
 export function AgendaCard({ card, onEdit, isDragging }: AgendaCardProps) {
-  const isWaitlist = card.status === 'waitlist';
+  const isWaitlist = false; // waitlist status removed
   const isBriefingCard = card.card_type === 'briefing';
   
   const getCardIcon = () => {
@@ -67,7 +67,7 @@ export function AgendaCard({ card, onEdit, isDragging }: AgendaCardProps) {
       </CardHeader>
       <CardContent className="pt-0 space-y-3">
         {/* Waitlist Info */}
-        {isWaitlist && card.waitlist_data && (
+        {/* isWaitlist && card.waitlist_data && (
           <div className="bg-orange-50 dark:bg-orange-950/20 rounded-lg p-3 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Creators Progress</span>
@@ -93,7 +93,7 @@ export function AgendaCard({ card, onEdit, isDragging }: AgendaCardProps) {
               )}
             </div>
           </div>
-        )}
+        ) */}
 
         {/* Properties for concept cards */}
         {card.properties && (

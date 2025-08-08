@@ -261,7 +261,10 @@ async function runTest() {
       .eq('casting_id', castingId);
     
     const hasApprovedBriefing = briefingLinks?.some(
-      link => link.briefing?.status === 'approved'
+      link => {
+        const briefing = link.briefing as any;
+        return briefing && !Array.isArray(briefing) && briefing.status === 'approved';
+      }
     ) || false;
     
     const newStatus = hasApprovedBriefing ? 'shooting' : 'approved_by_client';
@@ -333,8 +336,8 @@ async function runTest() {
       log(`Casting: ${finalCasting.title}`, 'info');
       log(`Status: ${finalCasting.status}`, 'info');
       log(`Invitations sent: ${finalCasting.casting_invitations?.length || 0}`, 'info');
-      log(`Creators selected: ${finalCasting.casting_selections?.filter(s => s.selected_by_role === 'client').length || 0}`, 'info');
-      log(`Submissions: ${finalCasting.creator_submissions?.filter(s => s.submission_status === 'pending_review').length || 0} pending review`, 'info');
+      log(`Creators selected: ${finalCasting.casting_selections?.filter((s: any) => s.selected_by_role === 'client').length || 0}`, 'info');
+      log(`Submissions: ${finalCasting.creator_submissions?.filter((s: any) => s.submission_status === 'pending_review').length || 0} pending review`, 'info');
     }
     
     logSection('TEST COMPLETED SUCCESSFULLY');

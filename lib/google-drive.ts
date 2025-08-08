@@ -1,5 +1,6 @@
 import { drive_v3 } from '@googleapis/drive';
 import { GaxiosError } from 'gaxios';
+import { GoogleAuth } from 'google-auth-library';
 
 // Initialize the Drive client with service account credentials
 function initializeDriveClient(): drive_v3.Drive {
@@ -16,7 +17,7 @@ function initializeDriveClient(): drive_v3.Drive {
     throw new Error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY. Make sure it is base64 encoded.');
   }
 
-  const auth = new drive_v3.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/drive'],
   });
