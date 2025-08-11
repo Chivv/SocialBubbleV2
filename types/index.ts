@@ -273,6 +273,81 @@ export interface CreatorInvoice {
   submission?: CreatorSubmission;
 }
 
+// Analytics Types
+export interface CreatorEarnings {
+  totalEarnings: number;
+  pendingPayments: number;
+  paidAmount: number;
+  invoiceCount: number;
+  averagePerCampaign: number;
+  monthlyEarnings: Array<{
+    month: string;
+    amount: number;
+  }>;
+  recentInvoices: Array<{
+    id: string;
+    deal_amount: number;
+    status: InvoiceStatus;
+    submitted_at: string;
+    paid_at?: string;
+    casting?: { title: string };
+  }>;
+}
+
+export interface OpportunityStats {
+  totalInvitations: number;
+  pendingInvitations: number;
+  acceptedInvitations: number;
+  rejectedInvitations: number;
+  clientSelections: number;
+  responseRate: number;
+  acceptanceRate: number;
+  selectionRate: number;
+  activeOpportunities: Array<{
+    id: string;
+    title: string;
+    compensation: number;
+    invitedAt: string;
+  }>;
+  missedOpportunities: number;
+}
+
+export interface ActiveSubmissions {
+  pendingSubmission: Array<{
+    id: string;
+    castingTitle: string;
+    briefingTitle: string;
+    status: SubmissionStatus;
+    compensation: number;
+  }>;
+  inReview: Array<{
+    id: string;
+    castingTitle: string;
+    status: SubmissionStatus;
+    submittedAt?: string;
+  }>;
+  needsRevision: Array<{
+    id: string;
+    castingTitle: string;
+    feedback?: string;
+    feedbackAt?: string;
+  }>;
+  totalActive: number;
+  totalCompleted: number;
+  avgTurnaroundDays: number;
+}
+
+export interface PerformanceMetrics {
+  totalCampaignsCompleted: number;
+  memberSince: string;
+  monthsActive: number;
+  recentCompletions: Array<{
+    id: string;
+    title: string;
+    completedAt?: string;
+  }>;
+}
+
 // Creative Agenda Types
 export type CardType = 'briefing' | 'concept';
 export type Department = 'concepting' | 'editing' | 'publication';
