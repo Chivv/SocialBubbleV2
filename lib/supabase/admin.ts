@@ -29,7 +29,18 @@ export function getSupabaseAdmin(): SupabaseClient {
         auth: {
           autoRefreshToken: false,
           persistSession: false
-        }
+        },
+        global: {
+          fetch: (url, options = {}) => {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+            
+            return fetch(url, {
+              ...options,
+              signal: controller.signal,
+            }).finally(() => clearTimeout(timeout));
+          },
+        },
       }
     );
   }

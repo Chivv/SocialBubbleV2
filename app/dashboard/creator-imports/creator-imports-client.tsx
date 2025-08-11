@@ -130,6 +130,8 @@ export default function CreatorImportsClient({ initialCreators }: CreatorImports
       return;
     }
     
+    console.log('Sending bulk invitations for selected creators:', selectedCreators);
+    
     setLoading(true);
     try {
       const result = await sendBulkInvitations(selectedCreators);
@@ -225,10 +227,20 @@ export default function CreatorImportsClient({ initialCreators }: CreatorImports
   };
   
   const selectAll = () => {
-    const visibleIds = filteredCreators
-      .filter(c => !c.signed_up_at && !c.invitation_sent_at)
-      .map(c => c.id);
+    const eligibleCreators = filteredCreators.filter(c => !c.signed_up_at && !c.invitation_sent_at);
+    const visibleIds = eligibleCreators.map(c => c.id);
+    
+    console.log('Select All - Filtered creators:', filteredCreators.length);
+    console.log('Select All - Eligible creators:', eligibleCreators.length);
+    console.log('Select All - Setting selected creator IDs:', visibleIds);
+    
+    if (visibleIds.length === 0) {
+      toast.info('No eligible creators to select. All visible creators have already been invited or signed up.');
+      return;
+    }
+    
     setSelectedCreators(visibleIds);
+    toast.success(`Selected ${visibleIds.length} creators`);
   };
   
   return (

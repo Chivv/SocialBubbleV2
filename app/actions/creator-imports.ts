@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { sendCreatorInvitationEmail } from '@/lib/resend';
 import { queueEmails } from '@/lib/email-queue';
@@ -24,7 +24,7 @@ export async function getImportedCreators() {
   try {
     await checkAuthorization();
     
-    const supabase = createServiceClient();
+    const supabase = supabaseAdmin;
     
     // First get all imported creators
     const { data: importedCreators, error } = await supabase
@@ -109,7 +109,7 @@ export async function importCreatorsFromCSV(creators: { email: string; full_name
   try {
     await checkAuthorization();
     
-    const supabase = createServiceClient();
+    const supabase = supabaseAdmin;
     
     // Normalize and validate emails, filter out duplicates
     const processedCreators: any[] = [];
@@ -195,7 +195,7 @@ export async function sendCreatorInvitation(creatorId: string) {
   try {
     await checkAuthorization();
     
-    const supabase = createServiceClient();
+    const supabase = supabaseAdmin;
     
     // Get creator details
     const { data: creator, error: fetchError } = await supabase
@@ -241,20 +241,48 @@ export async function sendBulkInvitations(creatorIds: string[]) {
   try {
     await checkAuthorization();
     
-    const supabase = createServiceClient();
+    console.log('Sending bulk invitations for IDs:', creatorIds.length, 'creators');
     
-    // Get creators details
-    const { data: creators, error: fetchError } = await supabase
-      .from('creator_import_list')
-      .select('*')
-      .in('id', creatorIds);
+    if (!creatorIds || creatorIds.length === 0) {
+      throw new Error('No creator IDs provided');
+    }
     
-    if (fetchError || !creators || creators.length === 0) {
-      throw new Error('No creators found');
+    const supabase = supabaseAdmin;
+    
+    // Process in batches to avoid timeout issues
+    const BATCH_SIZE = 50;
+    const allCreators = [];
+    
+    for (let i = 0; i < creatorIds.length; i += BATCH_SIZE) {
+      const batchIds = creatorIds.slice(i, i + BATCH_SIZE);
+      console.log(`Fetching batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(creatorIds.length / BATCH_SIZE)}`);
+      
+      // Get creators details for this batch
+      const { data: batchCreators, error: fetchError } = await supabase
+        .from('creator_import_list')
+        .select('*')
+        .in('id', batchIds);
+      
+      if (fetchError) {
+        console.error('Database error fetching creators batch:', fetchError);
+        // Continue with other batches even if one fails
+        continue;
+      }
+      
+      if (batchCreators && batchCreators.length > 0) {
+        allCreators.push(...batchCreators);
+      }
+    }
+    
+    console.log(`Successfully fetched ${allCreators.length} creators out of ${creatorIds.length} IDs`);
+    
+    if (allCreators.length === 0) {
+      console.error('No creators found for any of the provided IDs');
+      throw new Error(`No creators found for the provided ${creatorIds.length} IDs. This might be a data synchronization issue.`);
     }
     
     // Queue emails for background sending
-    const emailTasks = creators.map(creator => ({
+    const emailTasks = allCreators.map(creator => ({
       recipient: creator.email,
       sendFn: () => sendCreatorInvitationEmail({
         to: creator.email,
@@ -265,19 +293,24 @@ export async function sendBulkInvitations(creatorIds: string[]) {
     queueEmails(emailTasks);
     console.log(`Queued ${emailTasks.length} invitation emails`);
     
-    // Update invitation sent timestamps
-    const { error: updateError } = await supabase
-      .from('creator_import_list')
-      .update({ invitation_sent_at: new Date().toISOString() })
-      .in('id', creatorIds);
-    
-    if (updateError) {
-      console.error('Update error:', updateError);
+    // Update invitation sent timestamps in batches
+    for (let i = 0; i < creatorIds.length; i += BATCH_SIZE) {
+      const batchIds = creatorIds.slice(i, i + BATCH_SIZE);
+      
+      const { error: updateError } = await supabase
+        .from('creator_import_list')
+        .update({ invitation_sent_at: new Date().toISOString() })
+        .in('id', batchIds);
+      
+      if (updateError) {
+        console.error(`Update error for batch ${Math.floor(i / BATCH_SIZE) + 1}:`, updateError);
+        // Continue updating other batches even if one fails
+      }
     }
     
     revalidatePath('/dashboard/creator-imports');
     
-    return { success: true, sent: creators.length };
+    return { success: true, sent: allCreators.length };
   } catch (error) {
     console.error('Error sending bulk invitations:', error);
     return { 
@@ -292,7 +325,7 @@ export async function sendFollowUpEmail(creatorId: string) {
   try {
     await checkAuthorization();
     
-    const supabase = createServiceClient();
+    const supabase = supabaseAdmin;
     
     // Get creator details
     const { data: creator, error: fetchError } = await supabase
@@ -338,7 +371,7 @@ export async function deleteImportedCreator(creatorId: string) {
   try {
     await checkAuthorization();
     
-    const supabase = createServiceClient();
+    const supabase = supabaseAdmin;
     
     const { error } = await supabase
       .from('creator_import_list')
@@ -366,7 +399,7 @@ export async function exportCreatorsCSV(filter?: 'all' | 'signed_up' | 'not_sign
   try {
     await checkAuthorization();
     
-    const supabase = createServiceClient();
+    const supabase = supabaseAdmin;
     
     // Get all imported creators
     const { data: importedCreators, error } = await supabase
