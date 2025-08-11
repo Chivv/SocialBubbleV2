@@ -75,7 +75,17 @@ export async function getCreatorEarnings() {
       invoiceCount: invoices?.length || 0,
       averagePerCampaign: invoices?.length ? totalEarnings / invoices.length : 0,
       monthlyEarnings,
-      recentInvoices: invoices?.slice(0, 5) || []
+      recentInvoices: invoices?.slice(0, 5).map(inv => {
+        const casting = Array.isArray(inv.casting) ? inv.casting[0] : inv.casting;
+        return {
+          id: inv.id,
+          deal_amount: inv.deal_amount,
+          status: inv.status,
+          submitted_at: inv.submitted_at,
+          paid_at: inv.paid_at,
+          casting: casting ? { title: casting.title } : undefined
+        };
+      }) || []
     };
   } catch (error) {
     console.error('Error fetching creator earnings:', error);
@@ -111,7 +121,7 @@ export async function getCreatorOpportunityStats() {
         status,
         invited_at,
         responded_at,
-        casting:castings(
+        casting:castings!inner(
           id,
           title,
           status,
@@ -127,7 +137,7 @@ export async function getCreatorOpportunityStats() {
       .select(`
         id,
         selected_by_role,
-        casting:castings(
+        casting:castings!inner(
           id,
           title,
           compensation
@@ -154,11 +164,12 @@ export async function getCreatorOpportunityStats() {
       : 0;
 
     // Get active opportunities (pending invitations with active castings)
-    const activeOpportunities = invitations?.filter(inv => 
-      inv.status === 'pending' && 
-      inv.casting?.status && 
-      ['inviting', 'check_intern'].includes(inv.casting.status)
-    ) || [];
+    const activeOpportunities = invitations?.filter(inv => {
+      const casting = Array.isArray(inv.casting) ? inv.casting[0] : inv.casting;
+      return inv.status === 'pending' && 
+        casting?.status && 
+        ['inviting', 'check_intern'].includes(casting.status);
+    }) || [];
 
     return {
       totalInvitations,
@@ -169,12 +180,15 @@ export async function getCreatorOpportunityStats() {
       responseRate,
       acceptanceRate,
       selectionRate,
-      activeOpportunities: activeOpportunities.map(opp => ({
-        id: opp.id,
-        title: opp.casting?.title || 'Unknown',
-        compensation: opp.casting?.compensation || 0,
-        invitedAt: opp.invited_at
-      })),
+      activeOpportunities: activeOpportunities.map(opp => {
+        const casting = Array.isArray(opp.casting) ? opp.casting[0] : opp.casting;
+        return {
+          id: opp.id,
+          title: casting?.title || 'Unknown',
+          compensation: casting?.compensation || 0,
+          invitedAt: opp.invited_at
+        };
+      }),
       missedOpportunities: rejectedInvitations
     };
   } catch (error) {
@@ -264,25 +278,41 @@ export async function getActiveSubmissions() {
     }
 
     return {
-      pendingSubmission: pendingSubmission.map(s => ({
-        id: s.id,
-        castingTitle: s.casting?.title || 'Unknown',
-        briefingTitle: s.briefing_links?.[0]?.briefing?.title || 'No briefing linked',
-        status: s.submission_status,
-        compensation: s.casting?.compensation || 0
-      })),
-      inReview: inReview.map(s => ({
-        id: s.id,
-        castingTitle: s.casting?.title || 'Unknown',
-        status: s.submission_status,
-        submittedAt: s.submitted_at
-      })),
-      needsRevision: needsRevision.map(s => ({
-        id: s.id,
-        castingTitle: s.casting?.title || 'Unknown',
-        feedback: s.feedback,
-        feedbackAt: s.feedback_at
-      })),
+      pendingSubmission: pendingSubmission.map(s => {
+        const casting = Array.isArray(s.casting) ? s.casting[0] : s.casting;
+        let briefingTitle = 'No briefing linked';
+        if (s.briefing_links && s.briefing_links[0]) {
+          const briefing = s.briefing_links[0].briefing as any;
+          if (briefing) {
+            briefingTitle = Array.isArray(briefing) ? briefing[0]?.title : briefing.title;
+          }
+        }
+        return {
+          id: s.id,
+          castingTitle: casting?.title || 'Unknown',
+          briefingTitle: briefingTitle || 'No briefing linked',
+          status: s.submission_status,
+          compensation: casting?.compensation || 0
+        };
+      }),
+      inReview: inReview.map(s => {
+        const casting = Array.isArray(s.casting) ? s.casting[0] : s.casting;
+        return {
+          id: s.id,
+          castingTitle: casting?.title || 'Unknown',
+          status: s.submission_status,
+          submittedAt: s.submitted_at
+        };
+      }),
+      needsRevision: needsRevision.map(s => {
+        const casting = Array.isArray(s.casting) ? s.casting[0] : s.casting;
+        return {
+          id: s.id,
+          castingTitle: casting?.title || 'Unknown',
+          feedback: s.feedback,
+          feedbackAt: s.feedback_at
+        };
+      }),
       totalActive: submissions?.length || 0,
       totalCompleted,
       avgTurnaroundDays: avgTurnaround
@@ -338,11 +368,14 @@ export async function getCreatorPerformanceMetrics() {
       totalCampaignsCompleted: completedCampaigns?.length || 0,
       memberSince: creator.created_at,
       monthsActive: monthsSinceMember,
-      recentCompletions: completedCampaigns?.slice(0, 3).map(c => ({
-        id: c.id,
-        title: c.casting?.title || 'Unknown',
-        completedAt: c.approved_at
-      })) || []
+      recentCompletions: completedCampaigns?.slice(0, 3).map(c => {
+        const casting = Array.isArray(c.casting) ? c.casting[0] : c.casting;
+        return {
+          id: c.id,
+          title: casting?.title || 'Unknown',
+          completedAt: c.approved_at
+        };
+      }) || []
     };
   } catch (error) {
     console.error('Error fetching performance metrics:', error);
