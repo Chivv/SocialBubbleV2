@@ -10,9 +10,9 @@ To enable file uploads for creator profiles, you need to create two storage buck
    - Max file size: 5MB
 
 2. **introduction-videos**
-   - For storing creator introduction videos
-   - Accepted formats: MP4, MOV, AVI
-   - Max file size: 50MB
+   - For storing creator introduction/instruction videos
+   - Accepted formats: ALL video formats (MP4, MOV, AVI, MKV, WebM, etc.)
+   - Max file size: 500MB
 
 ## Setup Instructions
 
@@ -29,8 +29,8 @@ To enable file uploads for creator profiles, you need to create two storage buck
 ### Introduction Videos Bucket
 - Name: `introduction-videos`
 - Public bucket: Yes (enable this)
-- File size limit: 50MB
-- Allowed MIME types: `video/*`
+- File size limit: 500MB
+- Allowed MIME types: Leave empty to accept all formats (or use `video/*` if you want to restrict to video files only)
 
 ## Storage Policies
 

@@ -58,12 +58,8 @@ const step3Schema = z.object({
       'Please select a valid file'
     )
     .refine(
-      (file) => !file || file.size <= 50 * 1024 * 1024,
-      'File size must be less than 50MB'
-    )
-    .refine(
-      (file) => !file || file.type.startsWith('video/'),
-      'File must be a video'
+      (file) => !file || file.size <= 500 * 1024 * 1024,
+      'File size must be less than 500MB'
     ),
 });
 
@@ -237,7 +233,7 @@ export default function CreatorSignupForm() {
                           <FormItem>
                             <FormLabel>First Name</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} className={form.formState.errors.first_name ? "border-red-500" : ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -251,7 +247,7 @@ export default function CreatorSignupForm() {
                           <FormItem>
                             <FormLabel>Last Name</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} className={form.formState.errors.last_name ? "border-red-500" : ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -266,7 +262,7 @@ export default function CreatorSignupForm() {
                         <FormItem>
                           <FormLabel>Date of Birth</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} />
+                            <Input type="date" {...field} className={form.formState.errors.date_of_birth ? "border-red-500" : ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -380,7 +376,7 @@ export default function CreatorSignupForm() {
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input type="email" {...field} />
+                            <Input type="email" {...field} className={form.formState.errors.email ? "border-red-500" : ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -394,7 +390,7 @@ export default function CreatorSignupForm() {
                         <FormItem>
                           <FormLabel>Phone Number</FormLabel>
                           <FormControl>
-                            <Input type="tel" {...field} />
+                            <Input type="tel" {...field} className={form.formState.errors.phone ? "border-red-500" : ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -408,7 +404,7 @@ export default function CreatorSignupForm() {
                         <FormItem>
                           <FormLabel>Full Address</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} className={form.formState.errors.address ? "border-red-500" : ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -422,7 +418,7 @@ export default function CreatorSignupForm() {
                         <FormItem>
                           <FormLabel>Website/Portfolio URL</FormLabel>
                           <FormControl>
-                            <Input type="url" placeholder="https://..." {...field} />
+                            <Input type="url" placeholder="https://..." {...field} className={form.formState.errors.website_url ? "border-red-500" : ""} />
                           </FormControl>
                           <FormDescription>Optional</FormDescription>
                           <FormMessage />
@@ -447,6 +443,7 @@ export default function CreatorSignupForm() {
                             <Input
                               type="file"
                               accept=".jpg,.jpeg,.png,.gif,.webp"
+                              className={form.formState.errors.profile_picture ? "border-red-500" : ""}
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 field.onChange(file);
@@ -489,7 +486,8 @@ export default function CreatorSignupForm() {
                           <FormControl>
                             <Input
                               type="file"
-                              accept="video/*"
+                              accept="*"
+                              className={form.formState.errors.introduction_video ? "border-red-500" : ""}
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 field.onChange(file);
@@ -503,7 +501,7 @@ export default function CreatorSignupForm() {
                             />
                           </FormControl>
                           <FormDescription>
-                            MP4, MOV, or AVI (Max 50MB)
+                            All video formats accepted (Max 500MB)
                           </FormDescription>
                           <FormMessage />
                           {videoPreview && (

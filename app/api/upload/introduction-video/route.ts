@@ -4,6 +4,9 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const INTRODUCTION_VIDEOS_BUCKET = 'introduction-videos';
 
+export const maxDuration = 60; // Maximum function duration in seconds
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
@@ -18,14 +21,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file type
-    if (!file.type.startsWith('video/')) {
-      return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
-    }
-
-    // Validate file size (50MB)
-    if (file.size > 50 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File too large' }, { status: 400 });
+    // Validate file size (500MB)
+    if (file.size > 500 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File too large. Maximum size is 500MB' }, { status: 400 });
     }
 
     // Create unique filename
