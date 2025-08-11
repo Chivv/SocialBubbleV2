@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createClient } from '@/lib/supabase/client';
-import { uploadProfilePicture, uploadIntroductionVideo } from '@/lib/supabase/storage';
+import { uploadProfilePicture } from '@/lib/supabase/storage';
 import { triggerCreatorSignupAutomation } from '@/app/actions/creators';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,17 +50,6 @@ const step3Schema = z.object({
       (file) => file && ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type),
       'File must be an image (JPG, PNG, GIF, or WebP)'
     ),
-  introduction_video: z
-    .any()
-    .optional()
-    .refine(
-      (file) => !file || file instanceof File,
-      'Please select a valid file'
-    )
-    .refine(
-      (file) => !file || file.size <= 500 * 1024 * 1024,
-      'File size must be less than 500MB'
-    ),
 });
 
 // Combined schema
@@ -74,7 +63,6 @@ export default function CreatorSignupForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
-  const [videoPreview, setVideoPreview] = useState<string | null>(null);
   
   // Check if user signed up with OAuth
   const isOAuthUser = user?.primaryEmailAddress?.verification?.strategy?.startsWith('oauth');
@@ -107,7 +95,7 @@ export default function CreatorSignupForm() {
         fieldsToValidate = ['email', 'phone', 'address', 'website_url'];
         break;
       case 3:
-        fieldsToValidate = ['profile_picture', 'introduction_video'];
+        fieldsToValidate = ['profile_picture'];
         break;
     }
 
@@ -137,19 +125,11 @@ export default function CreatorSignupForm() {
 
       // Upload files if provided
       let profilePictureUrl = null;
-      let introductionVideoUrl = null;
 
       if (data.profile_picture) {
         profilePictureUrl = await uploadProfilePicture(data.profile_picture, user.id);
         if (!profilePictureUrl) {
           throw new Error('Failed to upload profile picture');
-        }
-      }
-
-      if (data.introduction_video) {
-        introductionVideoUrl = await uploadIntroductionVideo(data.introduction_video, user.id);
-        if (!introductionVideoUrl) {
-          throw new Error('Failed to upload introduction video');
         }
       }
 
@@ -170,7 +150,7 @@ export default function CreatorSignupForm() {
           address: data.address,
           website_url: data.website_url || null,
           profile_picture_url: profilePictureUrl || null,
-          introduction_video_url: introductionVideoUrl || null,
+          introduction_video_url: null,
         })
         .select()
         .single();
@@ -187,7 +167,7 @@ export default function CreatorSignupForm() {
           phone: data.phone,
           primary_language: data.primary_language,
           profile_picture_url: profilePictureUrl,
-          introduction_video_url: introductionVideoUrl,
+          introduction_video_url: null,
         });
       }
 
@@ -477,48 +457,6 @@ export default function CreatorSignupForm() {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="introduction_video"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Introduction Video</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="file"
-                              accept="*"
-                              className={form.formState.errors.introduction_video ? "border-red-500" : ""}
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                field.onChange(file);
-                                if (file) {
-                                  const videoUrl = URL.createObjectURL(file);
-                                  setVideoPreview(videoUrl);
-                                } else {
-                                  setVideoPreview(null);
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            All video formats accepted (Max 500MB)
-                          </FormDescription>
-                          <FormMessage />
-                          {videoPreview && (
-                            <div className="mt-4">
-                              <p className="text-sm font-medium mb-2">Preview:</p>
-                              <video
-                                controls
-                                src={videoPreview}
-                                className="rounded-lg max-w-sm w-full"
-                              >
-                                Your browser does not support the video tag.
-                              </video>
-                            </div>
-                          )}
-                        </FormItem>
-                      )}
-                    />
                   </div>
                 )}
 
