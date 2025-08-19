@@ -366,6 +366,90 @@ export async function sendFollowUpEmail(creatorId: string) {
   }
 }
 
+// Send bulk follow-up emails to multiple creators
+export async function sendBulkFollowUps(creatorIds: string[]) {
+  try {
+    await checkAuthorization();
+    
+    console.log('Sending bulk follow-ups for IDs:', creatorIds.length, 'creators');
+    
+    if (!creatorIds || creatorIds.length === 0) {
+      throw new Error('No creator IDs provided');
+    }
+    
+    const supabase = supabaseAdmin;
+    
+    // Process in batches to avoid timeout issues
+    const BATCH_SIZE = 50;
+    const allCreators = [];
+    
+    for (let i = 0; i < creatorIds.length; i += BATCH_SIZE) {
+      const batchIds = creatorIds.slice(i, i + BATCH_SIZE);
+      console.log(`Fetching batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(creatorIds.length / BATCH_SIZE)}`);
+      
+      // Get creators details for this batch - only those who haven't received follow-up yet
+      const { data: batchCreators, error: fetchError } = await supabase
+        .from('creator_import_list')
+        .select('*')
+        .in('id', batchIds)
+        .is('follow_up_sent_at', null); // Only get creators who haven't received follow-up
+      
+      if (fetchError) {
+        console.error('Database error fetching creators batch:', fetchError);
+        continue;
+      }
+      
+      if (batchCreators && batchCreators.length > 0) {
+        allCreators.push(...batchCreators);
+      }
+    }
+    
+    console.log(`Successfully fetched ${allCreators.length} creators eligible for follow-up out of ${creatorIds.length} IDs`);
+    
+    if (allCreators.length === 0) {
+      console.log('No eligible creators found for follow-up (may have already received follow-ups)');
+      throw new Error(`No eligible creators found. All selected creators may have already received follow-up emails.`);
+    }
+    
+    // Queue follow-up emails for background sending
+    const emailTasks = allCreators.map(creator => ({
+      recipient: creator.email,
+      sendFn: () => sendCreatorFollowUpEmail({
+        to: creator.email,
+        fullName: creator.full_name
+      })
+    }));
+    
+    queueEmails(emailTasks);
+    console.log(`Queued ${emailTasks.length} follow-up emails`);
+    
+    // Update follow-up sent timestamps in batches
+    const creatorIdsToUpdate = allCreators.map(c => c.id);
+    for (let i = 0; i < creatorIdsToUpdate.length; i += BATCH_SIZE) {
+      const batchIds = creatorIdsToUpdate.slice(i, i + BATCH_SIZE);
+      
+      const { error: updateError } = await supabase
+        .from('creator_import_list')
+        .update({ follow_up_sent_at: new Date().toISOString() })
+        .in('id', batchIds);
+      
+      if (updateError) {
+        console.error(`Update error for batch ${Math.floor(i / BATCH_SIZE) + 1}:`, updateError);
+      }
+    }
+    
+    revalidatePath('/dashboard/creator-imports');
+    
+    return { success: true, sent: allCreators.length };
+  } catch (error) {
+    console.error('Error sending bulk follow-ups:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to send follow-ups' 
+    };
+  }
+}
+
 // Delete imported creator
 export async function deleteImportedCreator(creatorId: string) {
   try {

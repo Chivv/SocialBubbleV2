@@ -8,6 +8,7 @@ import {
   sendCreatorInvitation, 
   sendBulkInvitations, 
   sendFollowUpEmail,
+  sendBulkFollowUps,
   deleteImportedCreator,
   exportCreatorsCSV
 } from '@/app/actions/creator-imports';
@@ -59,6 +60,7 @@ export default function CreatorImportsClient({ initialCreators }: CreatorImports
   const [showUpload, setShowUpload] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'signed_up' | 'not_signed_up'>('all');
+  const [selectionMode, setSelectionMode] = useState<'invite' | 'follow-up'>('invite');
   
   // Filter creators based on search and status
   const filteredCreators = creators.filter(creator => {
@@ -149,6 +151,31 @@ export default function CreatorImportsClient({ initialCreators }: CreatorImports
     }
   };
   
+  const handleSendBulkFollowUps = async () => {
+    if (selectedCreators.length === 0) {
+      toast.error('No creators selected');
+      return;
+    }
+    
+    console.log('Sending bulk follow-ups for selected creators:', selectedCreators);
+    
+    setLoading(true);
+    try {
+      const result = await sendBulkFollowUps(selectedCreators);
+      if (result.success) {
+        toast.success(`Sent ${result.sent} follow-up emails`);
+        setSelectedCreators([]);
+        router.refresh();
+      } else {
+        toast.error(result.error || 'Failed to send follow-ups');
+      }
+    } catch (error) {
+      toast.error('Failed to send follow-ups');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   const handleSendFollowUp = async (creatorId: string) => {
     setLoading(true);
     try {
@@ -227,20 +254,36 @@ export default function CreatorImportsClient({ initialCreators }: CreatorImports
   };
   
   const selectAll = () => {
-    const eligibleCreators = filteredCreators.filter(c => !c.signed_up_at && !c.invitation_sent_at);
+    let eligibleCreators;
+    let message;
+    
+    if (selectionMode === 'invite') {
+      // For invitations: select those who haven't been invited and haven't signed up
+      eligibleCreators = filteredCreators.filter(c => !c.signed_up_at && !c.invitation_sent_at);
+      message = 'No eligible creators to select. All visible creators have already been invited or signed up.';
+    } else {
+      // For follow-ups: select those who have been invited but haven't signed up and haven't received follow-up
+      eligibleCreators = filteredCreators.filter(c => 
+        !c.signed_up_at && 
+        c.invitation_sent_at && 
+        !c.follow_up_sent_at
+      );
+      message = 'No eligible creators for follow-up. All invited creators have either signed up or already received a follow-up.';
+    }
+    
     const visibleIds = eligibleCreators.map(c => c.id);
     
-    console.log('Select All - Filtered creators:', filteredCreators.length);
-    console.log('Select All - Eligible creators:', eligibleCreators.length);
-    console.log('Select All - Setting selected creator IDs:', visibleIds);
+    console.log(`Select All (${selectionMode}) - Filtered creators:`, filteredCreators.length);
+    console.log(`Select All (${selectionMode}) - Eligible creators:`, eligibleCreators.length);
+    console.log(`Select All (${selectionMode}) - Setting selected creator IDs:`, visibleIds);
     
     if (visibleIds.length === 0) {
-      toast.info('No eligible creators to select. All visible creators have already been invited or signed up.');
+      toast.info(message);
       return;
     }
     
     setSelectedCreators(visibleIds);
-    toast.success(`Selected ${visibleIds.length} creators`);
+    toast.success(`Selected ${visibleIds.length} creators for ${selectionMode === 'invite' ? 'invitation' : 'follow-up'}`);
   };
   
   return (
@@ -307,14 +350,28 @@ export default function CreatorImportsClient({ initialCreators }: CreatorImports
                 Export
               </Button>
               {selectedCreators.length > 0 && (
-                <Button
-                  size="sm"
-                  onClick={handleSendBulkInvitations}
-                  disabled={loading}
-                >
-                  <Send className="h-4 w-4 mr-1" />
-                  Send {selectedCreators.length} Invites
-                </Button>
+                <>
+                  {selectionMode === 'invite' ? (
+                    <Button
+                      size="sm"
+                      onClick={handleSendBulkInvitations}
+                      disabled={loading}
+                    >
+                      <Send className="h-4 w-4 mr-1" />
+                      Send {selectedCreators.length} Invites
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleSendBulkFollowUps}
+                      disabled={loading}
+                    >
+                      <Clock className="h-4 w-4 mr-1" />
+                      Send {selectedCreators.length} Follow-ups
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -343,9 +400,39 @@ export default function CreatorImportsClient({ initialCreators }: CreatorImports
                 <SelectItem value="not_signed_up">Not Signed Up</SelectItem>
               </SelectContent>
             </Select>
-            {filteredCreators.some(c => !c.signed_up_at && !c.invitation_sent_at) && (
-              <Button variant="outline" size="sm" onClick={selectAll}>
-                Select All
+          </div>
+          
+          {/* Selection Mode Toggle */}
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm text-muted-foreground">Selection mode:</span>
+            <div className="flex gap-2">
+              <Button
+                variant={selectionMode === 'invite' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setSelectionMode('invite');
+                  setSelectedCreators([]);
+                }}
+              >
+                <Send className="h-3 w-3 mr-1" />
+                Invitations
+              </Button>
+              <Button
+                variant={selectionMode === 'follow-up' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setSelectionMode('follow-up');
+                  setSelectedCreators([]);
+                }}
+              >
+                <Clock className="h-3 w-3 mr-1" />
+                Follow-ups
+              </Button>
+            </div>
+            {((selectionMode === 'invite' && filteredCreators.some(c => !c.signed_up_at && !c.invitation_sent_at)) ||
+              (selectionMode === 'follow-up' && filteredCreators.some(c => !c.signed_up_at && c.invitation_sent_at && !c.follow_up_sent_at))) && (
+              <Button variant="outline" size="sm" onClick={selectAll} className="ml-auto">
+                Select All Eligible
               </Button>
             )}
           </div>
@@ -370,10 +457,18 @@ export default function CreatorImportsClient({ initialCreators }: CreatorImports
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredCreators.map((creator) => (
+                  filteredCreators.map((creator) => {
+                    // Determine if checkbox should be shown based on selection mode
+                    const showCheckbox = 
+                      !creator.signed_up_at && (
+                        (selectionMode === 'invite' && !creator.invitation_sent_at) ||
+                        (selectionMode === 'follow-up' && creator.invitation_sent_at && !creator.follow_up_sent_at)
+                      );
+                    
+                    return (
                     <TableRow key={creator.id}>
                       <TableCell>
-                        {!creator.signed_up_at && (
+                        {showCheckbox && (
                           <Checkbox
                             checked={selectedCreators.includes(creator.id)}
                             onCheckedChange={() => toggleCreatorSelection(creator.id)}
@@ -439,7 +534,7 @@ export default function CreatorImportsClient({ initialCreators }: CreatorImports
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
+                  )})
                 )}
               </TableBody>
             </Table>
