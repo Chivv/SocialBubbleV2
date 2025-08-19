@@ -7,6 +7,7 @@ import { CastingClosedNoResponseTemplate } from '@/components/emails/casting-clo
 import { CastingReadyForReviewTemplate } from '@/components/emails/casting-ready-for-review';
 import { BriefingNowReadyTemplate } from '@/components/emails/briefing-now-ready';
 import { CreatorInvitationTemplate } from '@/components/emails/creator-invitation-template';
+import { CreatorFollowUpTemplate } from '@/components/emails/creator-follow-up-template';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -288,6 +289,32 @@ export async function sendCreatorInvitationEmail({
     to: [to],
     subject: "📣 We're live baby – nieuw Bubble platform voor al jouw opdrachten",
     react: CreatorInvitationTemplate({
+      fullName,
+    }),
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+// Send follow-up email to imported creators
+export interface SendCreatorFollowUpParams {
+  to: string;
+  fullName: string;
+}
+
+export async function sendCreatorFollowUpEmail({
+  to,
+  fullName,
+}: SendCreatorFollowUpParams) {
+  const { data, error } = await resend.emails.send({
+    from: "Kaylie van Bubble Ads <kaylie@creator-invites.bubbleads.nl>",
+    to: [to],
+    subject: "Is alles duidelijk? Je hebt nog geen account aangemaakt",
+    react: CreatorFollowUpTemplate({
       fullName,
     }),
   });

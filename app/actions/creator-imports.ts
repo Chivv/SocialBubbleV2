@@ -3,7 +3,7 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-import { sendCreatorInvitationEmail } from '@/lib/resend';
+import { sendCreatorInvitationEmail, sendCreatorFollowUpEmail } from '@/lib/resend';
 import { queueEmails } from '@/lib/email-queue';
 
 // Check if user is authorized (bas@bubbleads.nl)
@@ -338,8 +338,8 @@ export async function sendFollowUpEmail(creatorId: string) {
       throw new Error('Creator not found');
     }
     
-    // Send follow-up email (using same template for now)
-    await sendCreatorInvitationEmail({
+    // Send follow-up email with new template
+    await sendCreatorFollowUpEmail({
       to: creator.email,
       fullName: creator.full_name
     });
