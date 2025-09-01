@@ -58,35 +58,183 @@ serve(async (req) => {
     console.log('Manual trigger:', body.isManualTrigger || false)
 
     // ============================================
-    // YOUR DAILY TASK LOGIC GOES HERE
+    // DAILY TASK LOGIC
     // ============================================
     
-    // Example: Update creator statistics
-    const { data: creators, error: creatorsError } = await supabase
-      .from('creators')
-      .select('id, created_at')
+    // 1. Check and generate monthly creative agendas for clients
+    const today = new Date()
+    const currentDay = today.getDate() // Day of month (1-31)
+    const currentMonth = today.getMonth()
+    const currentYear = today.getFullYear()
     
-    if (creatorsError) {
-      throw new Error(`Failed to fetch creators: ${creatorsError.message}`)
+    console.log(`Checking for clients with invoice date: ${currentDay}`)
+    
+    // Get all clients with invoice_date matching today
+    const { data: clientsToProcess, error: clientsError } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('invoice_date', currentDay)
+    
+    if (clientsError) {
+      throw new Error(`Failed to fetch clients: ${clientsError.message}`)
     }
-
-    // Example: Send daily reports
-    // You can add logic here to:
-    // - Generate reports
-    // - Send emails
-    // - Update statistics
-    // - Clean up old data
-    // - Sync with external services
-    // - etc.
+    
+    let clientsProcessed = 0
+    let totalConceptCards = 0
+    let totalBriefings = 0
+    const processingErrors = []
+    
+    if (clientsToProcess && clientsToProcess.length > 0) {
+      console.log(`Found ${clientsToProcess.length} clients to process`)
+      
+      for (const client of clientsToProcess) {
+        try {
+          // Check if we've already generated for this client this month
+          const startOfMonth = new Date(currentYear, currentMonth, 1)
+          const { data: existingCards } = await supabase
+            .from('creative_agenda_cards')
+            .select('id')
+            .eq('client_id', client.id)
+            .eq('created_by', 'system')
+            .gte('created_at', startOfMonth.toISOString())
+            .limit(1)
+          
+          if (existingCards && existingCards.length > 0) {
+            console.log(`Already generated for client ${client.company_name} this month`)
+            continue
+          }
+          
+          // Calculate deadlines
+          const conceptDeadline = new Date(today)
+          conceptDeadline.setDate(conceptDeadline.getDate() + 14) // 2 weeks from now
+          
+          const briefingDeadline = new Date(today)
+          briefingDeadline.setDate(briefingDeadline.getDate() + 7) // 1 week from now
+          
+          // Determine how many items to create
+          const numberOfConcepts = client.creatives_count || 4
+          const numberOfBriefings = client.briefings_count || 2
+          
+          // Generate concept cards
+          for (let i = 1; i <= numberOfConcepts; i++) {
+            const { error: cardError } = await supabase
+              .from('creative_agenda_cards')
+              .insert({
+                card_type: 'concept',
+                client_id: client.id,
+                department: 'concepting',
+                status: 'to_do',
+                title: `${client.company_name} - Concept ${i} - ${getMonthName(today)}`,
+                content: {
+                  type: 'doc',
+                  content: [{
+                    type: 'paragraph',
+                    content: [{
+                      type: 'text',
+                      text: `Monthly concept ${i} for ${client.company_name}`
+                    }]
+                  }]
+                },
+                deadline: conceptDeadline.toISOString(),
+                created_by: 'system',
+                in_waitlist: false
+              })
+            
+            if (!cardError) {
+              totalConceptCards++
+            } else {
+              processingErrors.push(`Concept card ${i} for ${client.company_name}: ${cardError.message}`)
+            }
+          }
+          
+          // Generate briefings
+          for (let i = 1; i <= numberOfBriefings; i++) {
+            // Create the briefing
+            const { data: briefing, error: briefingError } = await supabase
+              .from('briefings')
+              .insert({
+                title: `${client.company_name} - Briefing ${i} - ${getMonthName(today)}`,
+                client_id: client.id,
+                content: {
+                  type: 'doc',
+                  content: [{
+                    type: 'heading',
+                    attrs: { level: 1 },
+                    content: [{
+                      type: 'text',
+                      text: `${client.company_name} - Monthly Briefing ${i}`
+                    }]
+                  }, {
+                    type: 'paragraph',
+                    content: [{
+                      type: 'text',
+                      text: 'This briefing has been automatically generated. Please update with specific requirements.'
+                    }]
+                  }]
+                },
+                created_by: 'system',
+                status: 'draft',
+                deadline: briefingDeadline.toISOString()
+              })
+              .select()
+              .single()
+            
+            if (!briefingError && briefing) {
+              totalBriefings++
+              
+              // Create corresponding card in creative agenda
+              await supabase
+                .from('creative_agenda_cards')
+                .insert({
+                  card_type: 'briefing',
+                  client_id: client.id,
+                  department: 'concepting',
+                  status: 'to_do',
+                  title: `${client.company_name} - Briefing ${i} - ${getMonthName(today)}`,
+                  content: briefing.content,
+                  deadline: briefingDeadline.toISOString(),
+                  created_by: 'system',
+                  briefing_id: briefing.id,
+                  in_waitlist: false
+                })
+            } else if (briefingError) {
+              processingErrors.push(`Briefing ${i} for ${client.company_name}: ${briefingError.message}`)
+            }
+          }
+          
+          clientsProcessed++
+          console.log(`Processed client ${client.company_name}: ${numberOfConcepts} concepts, ${numberOfBriefings} briefings`)
+          
+        } catch (error) {
+          processingErrors.push(`Error processing ${client.company_name}: ${error.message}`)
+        }
+      }
+    } else {
+      console.log(`No clients with invoice date ${currentDay}`)
+    }
+    
+    // Helper function to get month name
+    function getMonthName(date: Date): string {
+      const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ]
+      return months[date.getMonth()]
+    }
 
     // Log task completion
     const result = {
       success: true,
       timestamp: new Date().toISOString(),
       amsterdamTime: new Date().toLocaleString('en-US', { timeZone: 'Europe/Amsterdam' }),
-      processedItems: creators?.length || 0,
       task: body.task || 'default',
-      message: 'Daily task completed successfully'
+      message: 'Daily task completed successfully',
+      creativeAgenda: {
+        clientsProcessed,
+        totalConceptCards,
+        totalBriefings,
+        errors: processingErrors
+      }
     }
 
     // Optionally, store execution log in database

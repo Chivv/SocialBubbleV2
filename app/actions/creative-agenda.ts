@@ -49,6 +49,7 @@ export async function getCardsByDepartment(department: Department): Promise<Crea
         properties:creative_agenda_card_properties(*)
       `)
       .eq('department', department)
+      .order('deadline', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: true });
 
     if (error) {
