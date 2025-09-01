@@ -82,14 +82,13 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
     { href: '/dashboard/creative-strategies', label: 'Creative Strategies', icon: Lightbulb },
   ] : [];
 
-  // Creative Agenda items for social_bubble role - removed duplicate, added castings at bottom
+  // Creative Agenda items for social_bubble role
   const creativeAgendaItems = userRole === 'social_bubble' ? [
     { href: '/dashboard/creative-agenda/concepting', label: 'Concepting', icon: Lightbulb },
     { href: '/dashboard/creative-agenda/editing', label: 'Editing', icon: Edit },
     { href: '/dashboard/creative-agenda/publication', label: 'Publication', icon: BookOpen },
     { href: '/dashboard/briefings', label: 'Briefings', icon: FileText },
     { href: '/dashboard/castings', label: 'Castings', icon: Camera },
-    { href: '/dashboard/creative-agenda', label: 'Overview', icon: Calendar },
   ] : [];
 
   // Development items for bas@bubbleads.nl - added Google Drive
