@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Users, Building2, UserCircle, FileText, Settings, Lightbulb, Camera, Receipt, Calendar, Send, Zap, TestTube, Mail, Upload, ChevronRight } from 'lucide-react';
+import { Home, Users, Building2, UserCircle, FileText, Settings, Lightbulb, Camera, Receipt, Calendar, Send, Zap, TestTube, Mail, Upload, ChevronRight, Code2, Edit, BookOpen } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
 import { UserRole } from '@/types';
 import {
@@ -36,6 +36,9 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
   const pathname = usePathname();
   const [testingOpen, setTestingOpen] = useState(false);
+  const [developmentOpen, setDevelopmentOpen] = useState(false);
+  const [clientsOpen, setClientsOpen] = useState(false);
+  const [creativeAgendaOpen, setCreativeAgendaOpen] = useState(false);
 
   const getNavItems = () => {
     switch (userRole) {
@@ -43,21 +46,10 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
         const baseItems = [
           { href: '/dashboard/social-bubble', label: 'Dashboard', icon: Home },
           { href: '/dashboard/creators', label: 'Creators', icon: Users },
-          { href: '/dashboard/clients', label: 'Clients', icon: Building2 },
-          { href: '/dashboard/briefings', label: 'Briefings', icon: FileText },
-          { href: '/dashboard/creative-strategies', label: 'Creative Strategies', icon: Lightbulb },
           { href: '/dashboard/castings', label: 'Castings', icon: Camera },
-          { href: '/dashboard/creative-agenda', label: 'Creative Agenda', icon: Calendar },
           { href: '/dashboard/invoices', label: 'Invoice Management', icon: Receipt },
-          { href: '/dashboard/settings/placeholders', label: 'Placeholders', icon: Settings },
-          { href: '/dashboard/settings/automations', label: 'Automations', icon: Zap },
           { href: '/dashboard/settings/google-drive', label: 'Google Drive', icon: Settings },
         ];
-        
-        // Add creator imports for bas@bubbleads.nl
-        if (userEmail === 'bas@bubbleads.nl') {
-          baseItems.splice(2, 0, { href: '/dashboard/creator-imports', label: 'Creator Imports', icon: Upload });
-        }
         
         return baseItems;
       case 'creator':
@@ -81,6 +73,28 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
 
   const navItems = getNavItems();
 
+  // Client items for social_bubble role
+  const clientItems = userRole === 'social_bubble' ? [
+    { href: '/dashboard/clients', label: 'Clients', icon: Building2 },
+    { href: '/dashboard/creative-strategies', label: 'Creative Strategies', icon: Lightbulb },
+  ] : [];
+
+  // Creative Agenda items for social_bubble role
+  const creativeAgendaItems = userRole === 'social_bubble' ? [
+    { href: '/dashboard/creative-agenda', label: 'Creative Agenda', icon: Calendar },
+    { href: '/dashboard/briefings', label: 'Briefings', icon: FileText },
+    { href: '/dashboard/creative-agenda/concepting', label: 'Concepting', icon: Lightbulb },
+    { href: '/dashboard/creative-agenda/editing', label: 'Editing', icon: Edit },
+    { href: '/dashboard/creative-agenda/publication', label: 'Publication', icon: BookOpen },
+  ] : [];
+
+  // Development items for bas@bubbleads.nl
+  const developmentItems = (userRole === 'social_bubble' && userEmail === 'bas@bubbleads.nl') ? [
+    { href: '/dashboard/creator-imports', label: 'Creator Imports', icon: Upload },
+    { href: '/dashboard/settings/automations', label: 'Automations', icon: Zap },
+    { href: '/dashboard/settings/placeholders', label: 'Placeholders', icon: Settings },
+  ] : [];
+
   // Test items for social_bubble role
   const testItems = userRole === 'social_bubble' ? [
     { href: '/dashboard/test-slack', label: 'Test Slack', icon: Send },
@@ -88,7 +102,10 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
     { href: '/dashboard/test-workflow', label: 'Test Workflow', icon: TestTube },
   ] : [];
 
-  // Check if any test link is active
+  // Check if dropdowns should be active
+  const isClientsActive = clientItems.some(item => pathname === item.href || pathname.startsWith(item.href + '/'));
+  const isCreativeAgendaActive = creativeAgendaItems.some(item => pathname === item.href || pathname.startsWith(item.href + '/'));
+  const isDevelopmentActive = developmentItems.some(item => pathname === item.href || pathname.startsWith(item.href + '/'));
   const isTestingActive = testItems.some(item => pathname === item.href || pathname.startsWith(item.href + '/'));
 
   return (
@@ -117,6 +134,105 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
                   </SidebarMenuItem>
                 );
               })}
+              
+              {/* Clients dropdown for social_bubble role */}
+              {clientItems.length > 0 && (
+                <Collapsible open={clientsOpen} onOpenChange={setClientsOpen}>
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="w-full" isActive={isClientsActive}>
+                        <Building2 className="h-4 w-4" />
+                        <span>Clients</span>
+                        <ChevronRight className={`ml-auto h-4 w-4 transition-transform duration-200 ${clientsOpen ? 'rotate-90' : ''}`} />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {clientItems.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = pathname === item.href;
+                          return (
+                            <SidebarMenuSubItem key={item.href}>
+                              <SidebarMenuSubButton asChild isActive={isActive}>
+                                <Link href={item.href}>
+                                  <Icon className="h-4 w-4" />
+                                  <span>{item.label}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
+
+              {/* Creative Agenda dropdown for social_bubble role */}
+              {creativeAgendaItems.length > 0 && (
+                <Collapsible open={creativeAgendaOpen} onOpenChange={setCreativeAgendaOpen}>
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="w-full" isActive={isCreativeAgendaActive}>
+                        <Calendar className="h-4 w-4" />
+                        <span>Creative Agenda</span>
+                        <ChevronRight className={`ml-auto h-4 w-4 transition-transform duration-200 ${creativeAgendaOpen ? 'rotate-90' : ''}`} />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {creativeAgendaItems.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = pathname === item.href;
+                          return (
+                            <SidebarMenuSubItem key={item.href}>
+                              <SidebarMenuSubButton asChild isActive={isActive}>
+                                <Link href={item.href}>
+                                  <Icon className="h-4 w-4" />
+                                  <span>{item.label}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
+
+              {/* Development dropdown for bas@bubbleads.nl */}
+              {developmentItems.length > 0 && (
+                <Collapsible open={developmentOpen} onOpenChange={setDevelopmentOpen}>
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="w-full" isActive={isDevelopmentActive}>
+                        <Code2 className="h-4 w-4" />
+                        <span>Development</span>
+                        <ChevronRight className={`ml-auto h-4 w-4 transition-transform duration-200 ${developmentOpen ? 'rotate-90' : ''}`} />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {developmentItems.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = pathname === item.href;
+                          return (
+                            <SidebarMenuSubItem key={item.href}>
+                              <SidebarMenuSubButton asChild isActive={isActive}>
+                                <Link href={item.href}>
+                                  <Icon className="h-4 w-4" />
+                                  <span>{item.label}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
               
               {/* Testing dropdown for social_bubble role */}
               {testItems.length > 0 && (
