@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Users, Building2, UserCircle, FileText, Settings, Lightbulb, Camera, Receipt, Calendar, Send, Zap, TestTube, Mail, Upload } from 'lucide-react';
+import { Home, Users, Building2, UserCircle, FileText, Settings, Lightbulb, Camera, Receipt, Calendar, Send, Zap, TestTube, Mail, Upload, ChevronRight } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
 import { UserRole } from '@/types';
 import {
@@ -14,10 +14,19 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   userRole: UserRole;
@@ -26,6 +35,7 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
   const pathname = usePathname();
+  const [testingOpen, setTestingOpen] = useState(false);
 
   const getNavItems = () => {
     switch (userRole) {
@@ -42,9 +52,6 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
           { href: '/dashboard/settings/placeholders', label: 'Placeholders', icon: Settings },
           { href: '/dashboard/settings/automations', label: 'Automations', icon: Zap },
           { href: '/dashboard/settings/google-drive', label: 'Google Drive', icon: Settings },
-          { href: '/dashboard/test-slack', label: 'Test Slack', icon: Send },
-          { href: '/dashboard/test-email', label: 'Test Email', icon: Mail },
-          { href: '/dashboard/test-workflow', label: 'Test Workflow', icon: TestTube },
         ];
         
         // Add creator imports for bas@bubbleads.nl
@@ -74,6 +81,16 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
 
   const navItems = getNavItems();
 
+  // Test items for social_bubble role
+  const testItems = userRole === 'social_bubble' ? [
+    { href: '/dashboard/test-slack', label: 'Test Slack', icon: Send },
+    { href: '/dashboard/test-email', label: 'Test Email', icon: Mail },
+    { href: '/dashboard/test-workflow', label: 'Test Workflow', icon: TestTube },
+  ] : [];
+
+  // Check if any test link is active
+  const isTestingActive = testItems.some(item => pathname === item.href || pathname.startsWith(item.href + '/'));
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -100,6 +117,39 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
                   </SidebarMenuItem>
                 );
               })}
+              
+              {/* Testing dropdown for social_bubble role */}
+              {testItems.length > 0 && (
+                <Collapsible open={testingOpen} onOpenChange={setTestingOpen}>
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="w-full" isActive={isTestingActive}>
+                        <TestTube className="h-4 w-4" />
+                        <span>Testing</span>
+                        <ChevronRight className={`ml-auto h-4 w-4 transition-transform duration-200 ${testingOpen ? 'rotate-90' : ''}`} />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {testItems.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = pathname === item.href;
+                          return (
+                            <SidebarMenuSubItem key={item.href}>
+                              <SidebarMenuSubButton asChild isActive={isActive}>
+                                <Link href={item.href}>
+                                  <Icon className="h-4 w-4" />
+                                  <span>{item.label}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
