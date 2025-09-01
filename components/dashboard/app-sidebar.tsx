@@ -39,16 +39,13 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
   const [developmentOpen, setDevelopmentOpen] = useState(false);
   const [clientsOpen, setClientsOpen] = useState(false);
   const [creativeAgendaOpen, setCreativeAgendaOpen] = useState(false);
+  const [creatorsOpen, setCreatorsOpen] = useState(false);
 
   const getNavItems = () => {
     switch (userRole) {
       case 'social_bubble':
         const baseItems = [
           { href: '/dashboard/social-bubble', label: 'Dashboard', icon: Home },
-          { href: '/dashboard/creators', label: 'Creators', icon: Users },
-          { href: '/dashboard/castings', label: 'Castings', icon: Camera },
-          { href: '/dashboard/invoices', label: 'Invoice Management', icon: Receipt },
-          { href: '/dashboard/settings/google-drive', label: 'Google Drive', icon: Settings },
         ];
         
         return baseItems;
@@ -73,26 +70,34 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
 
   const navItems = getNavItems();
 
+  // Creators dropdown items for social_bubble role
+  const creatorsItems = userRole === 'social_bubble' ? [
+    { href: '/dashboard/creators', label: 'Creators', icon: Users },
+    { href: '/dashboard/invoices', label: 'Invoice Management', icon: Receipt },
+  ] : [];
+
   // Client items for social_bubble role
   const clientItems = userRole === 'social_bubble' ? [
     { href: '/dashboard/clients', label: 'Clients', icon: Building2 },
     { href: '/dashboard/creative-strategies', label: 'Creative Strategies', icon: Lightbulb },
   ] : [];
 
-  // Creative Agenda items for social_bubble role
+  // Creative Agenda items for social_bubble role - removed duplicate, added castings at bottom
   const creativeAgendaItems = userRole === 'social_bubble' ? [
-    { href: '/dashboard/creative-agenda', label: 'Creative Agenda', icon: Calendar },
-    { href: '/dashboard/briefings', label: 'Briefings', icon: FileText },
     { href: '/dashboard/creative-agenda/concepting', label: 'Concepting', icon: Lightbulb },
     { href: '/dashboard/creative-agenda/editing', label: 'Editing', icon: Edit },
     { href: '/dashboard/creative-agenda/publication', label: 'Publication', icon: BookOpen },
+    { href: '/dashboard/briefings', label: 'Briefings', icon: FileText },
+    { href: '/dashboard/castings', label: 'Castings', icon: Camera },
+    { href: '/dashboard/creative-agenda', label: 'Overview', icon: Calendar },
   ] : [];
 
-  // Development items for bas@bubbleads.nl
+  // Development items for bas@bubbleads.nl - added Google Drive
   const developmentItems = (userRole === 'social_bubble' && userEmail === 'bas@bubbleads.nl') ? [
     { href: '/dashboard/creator-imports', label: 'Creator Imports', icon: Upload },
     { href: '/dashboard/settings/automations', label: 'Automations', icon: Zap },
     { href: '/dashboard/settings/placeholders', label: 'Placeholders', icon: Settings },
+    { href: '/dashboard/settings/google-drive', label: 'Google Drive', icon: Settings },
   ] : [];
 
   // Test items for social_bubble role
@@ -103,6 +108,7 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
   ] : [];
 
   // Check if dropdowns should be active
+  const isCreatorsActive = creatorsItems.some(item => pathname === item.href || pathname.startsWith(item.href + '/'));
   const isClientsActive = clientItems.some(item => pathname === item.href || pathname.startsWith(item.href + '/'));
   const isCreativeAgendaActive = creativeAgendaItems.some(item => pathname === item.href || pathname.startsWith(item.href + '/'));
   const isDevelopmentActive = developmentItems.some(item => pathname === item.href || pathname.startsWith(item.href + '/'));
@@ -134,21 +140,21 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
                   </SidebarMenuItem>
                 );
               })}
-              
-              {/* Clients dropdown for social_bubble role */}
-              {clientItems.length > 0 && (
-                <Collapsible open={clientsOpen} onOpenChange={setClientsOpen}>
+
+              {/* Creative Agenda dropdown - moved under Dashboard */}
+              {creativeAgendaItems.length > 0 && (
+                <Collapsible open={creativeAgendaOpen} onOpenChange={setCreativeAgendaOpen}>
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuButton className="w-full" isActive={isClientsActive}>
-                        <Building2 className="h-4 w-4" />
-                        <span>Clients</span>
-                        <ChevronRight className={`ml-auto h-4 w-4 transition-transform duration-200 ${clientsOpen ? 'rotate-90' : ''}`} />
+                      <SidebarMenuButton className="w-full" isActive={isCreativeAgendaActive}>
+                        <Calendar className="h-4 w-4" />
+                        <span>Creative Agenda</span>
+                        <ChevronRight className={`ml-auto h-4 w-4 transition-transform duration-200 ${creativeAgendaOpen ? 'rotate-90' : ''}`} />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {clientItems.map((item) => {
+                        {creativeAgendaItems.map((item) => {
                           const Icon = item.icon;
                           const isActive = pathname === item.href;
                           return (
@@ -168,20 +174,53 @@ export function AppSidebar({ userRole, userEmail, ...props }: AppSidebarProps) {
                 </Collapsible>
               )}
 
-              {/* Creative Agenda dropdown for social_bubble role */}
-              {creativeAgendaItems.length > 0 && (
-                <Collapsible open={creativeAgendaOpen} onOpenChange={setCreativeAgendaOpen}>
+              {/* Creators dropdown for social_bubble role */}
+              {creatorsItems.length > 0 && (
+                <Collapsible open={creatorsOpen} onOpenChange={setCreatorsOpen}>
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuButton className="w-full" isActive={isCreativeAgendaActive}>
-                        <Calendar className="h-4 w-4" />
-                        <span>Creative Agenda</span>
-                        <ChevronRight className={`ml-auto h-4 w-4 transition-transform duration-200 ${creativeAgendaOpen ? 'rotate-90' : ''}`} />
+                      <SidebarMenuButton className="w-full" isActive={isCreatorsActive}>
+                        <Users className="h-4 w-4" />
+                        <span>Creators</span>
+                        <ChevronRight className={`ml-auto h-4 w-4 transition-transform duration-200 ${creatorsOpen ? 'rotate-90' : ''}`} />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {creativeAgendaItems.map((item) => {
+                        {creatorsItems.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = pathname === item.href;
+                          return (
+                            <SidebarMenuSubItem key={item.href}>
+                              <SidebarMenuSubButton asChild isActive={isActive}>
+                                <Link href={item.href}>
+                                  <Icon className="h-4 w-4" />
+                                  <span>{item.label}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
+              
+              {/* Clients dropdown for social_bubble role */}
+              {clientItems.length > 0 && (
+                <Collapsible open={clientsOpen} onOpenChange={setClientsOpen}>
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="w-full" isActive={isClientsActive}>
+                        <Building2 className="h-4 w-4" />
+                        <span>Clients</span>
+                        <ChevronRight className={`ml-auto h-4 w-4 transition-transform duration-200 ${clientsOpen ? 'rotate-90' : ''}`} />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {clientItems.map((item) => {
                           const Icon = item.icon;
                           const isActive = pathname === item.href;
                           return (
